@@ -1094,9 +1094,31 @@ try {
   firebase.initializeApp(firebaseConfig);
   firebaseAuth = firebase.auth();
   db = firebase.firestore();
-  console.log("🔥 Firebase успішно підключено!");
+  console.log("🔥 Firebase успішно підключено та синхронізовано з Firestore!");
 } catch(e) { 
   console.log('Помилка підключення Firebase:', e); 
+}
+
+// Функції облачної синхронизації Firestore
+async function saveRepairToCloud(repairData) {
+  if (!db) return;
+  try {
+    await db.collection("repairs").doc(repairData.code.toString()).set(repairData);
+  } catch(e) { console.error("Помилка збереження ремонту в Firestore:", e); }
+}
+
+async function saveOrderToCloud(orderData) {
+  if (!db) return;
+  try {
+    await db.collection("orders").add(orderData);
+  } catch(e) { console.error("Помилка збереження замовлення в Firestore:", e); }
+}
+
+async function saveLedgerToCloud(ledgerData) {
+  if (!db) return;
+  try {
+    await db.collection("ledger").doc(ledgerData.id.toString()).set(ledgerData);
+  } catch(e) { console.error("Помилка збереження обліку в Firestore:", e); }
 }
 
 function setTheme(theme) {
@@ -1258,9 +1280,15 @@ let webSubmissions = JSON.parse(localStorage.getItem('excellent_web_submissions'
 let ledgerEntries = JSON.parse(localStorage.getItem('excellent_ledger_db') || '[]');
 const stepNames = ["Прийнято", "Діагностика", "Узгодження", "Ремонт", "Тести", "Готово"];
 
-function saveRepairs() { localStorage.setItem('excellent_repairs_db', JSON.stringify(allRepairs)); }
+function saveRepairs() { 
+  localStorage.setItem('excellent_repairs_db', JSON.stringify(allRepairs));
+  allRepairs.forEach(r => saveRepairToCloud(r));
+}
 function saveWebSubmissions() { localStorage.setItem('excellent_web_submissions', JSON.stringify(webSubmissions)); }
-function saveLedger() { localStorage.setItem('excellent_ledger_db', JSON.stringify(ledgerEntries)); }
+function saveLedger() { 
+  localStorage.setItem('excellent_ledger_db', JSON.stringify(ledgerEntries));
+  ledgerEntries.forEach(l => saveLedgerToCloud(l));
+}
 
 function updateClientSelect() {
   const select = document.getElementById('newRepairClient');
@@ -2198,7 +2226,11 @@ else { dot.className = 'status-dot offline'; text.textContent = 'Закрито'
 function checkoutOrder() {
 if (cart.length === 0) { alert('Кошик порожній!'); return; }
 if (!currentUser) { toggleCartModal(); toggleAuthModal(true); return; }
-cart.forEach(item => { orders.push({ name: item.name, price: item.price, date: new Date().toISOString(), userId: currentUser.id, status: 'progress' }); });
+cart.forEach(item => { 
+  const ord = { name: item.name, price: item.price, date: new Date().toISOString(), userId: currentUser.id, status: 'progress' };
+  orders.push(ord);
+  saveOrderToCloud(ord);
+});
 localStorage.setItem('matrix_orders', JSON.stringify(orders));
 if (currentUser) { currentUser.ordersCount = (currentUser.ordersCount || 0) + cart.reduce((s,item) => s + (item.qty || 1), 0); currentUser.bonuses = (currentUser.bonuses || 0) + cart.reduce((s,item) => s + (item.qty || 1) * 10, 0); localStorage.setItem('matrix_current_user', JSON.stringify(currentUser)); }
 alert(`✅ Замовлення оформлено! +${cart.reduce((s,item) => s + (item.qty || 1), 0) * 10} бонусів!`);
@@ -2341,7 +2373,7 @@ function toggleHelper() { const bubble = document.getElementById('helperBubble')
 function renderPopularQuestions() { const container = document.getElementById('popularQuestions'); const questions = ['Як почистити ноутбук?','Чому ПК не вмикається?','Як вибрати термопасту?','Скільки коштує діагностика?']; container.innerHTML = questions.map(q => `<button class="pop-btn" onclick="askPopular('${q}')">${q}</button>`).join(''); }
 
 const allReviews = [
-{name:'Андрій Коваленко',city:'Кам\'янське',device:'Ноутбук ASUS ROG',text:'Дякую майстру Олександру! Ноутбук перестав вмикатися після залиття кавою. За 2 години зробили діагностику, замінили клавіатуру та почистили плату. Працює як новий!',stars:5,badge:'⭐ Топ-відгук'},
+{name:'Андрій Коваленко',city:'Кам\'янське',device:'Ноутбук ASUS ROG',text:'Дякую майстру Олександру! Ноутбук переставав вмикатися після залиття кавою. За 2 години зробили діагностику, замінили клавіатуру та почистили плату. Працює як новий!',stars:5,badge:'⭐ Топ-відгук'},
 {name:'Катерина Мельник',city:'Кам\'янське',device:'Steam Deck',text:'Приїхав до мене Steam Deck з дрифтом стіків. Майстер Дмитро за годину замінив на Hall Effect — тепер усе літає!',stars:5,badge:''},
 {name:'Ігор Шевченко',city:'Кам\'янське',device:'Ігровий ПК',text:'Звертався з проблемою перегріву процесора. Замінили термоінтерфейс на PTM7950, почистили систему охолодження. Температура впала з 95°C до 72°C!',stars:5,badge:'🔥 Найкраща рекомендація'},
 {name:'Олена Петренко',city:'Кам\'янське',device:'MacBook Pro',text:'Дуже боялась віддавати MacBook у ремонт, але хлопці заспокоїли. Замінили батарею та термопасту, працює 8 годин без зарядки.',stars:5,badge:''},
@@ -2600,5 +2632,3 @@ document.addEventListener('DOMContentLoaded', () => {
   } catch(e) { console.error('Init error:', e); }
 });
 </script>
-</body>
-</html>
