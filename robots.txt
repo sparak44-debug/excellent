@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://sparak44-debug.github.io/excellent/sitemap.xml
