@@ -1100,7 +1100,39 @@ try {
   console.log('Помилка підключення Firebase:', e); 
 }
 
-// Функції облачної синхронизації Firestore
+// ==========================================
+// ИНТЕГРАЦИЯ С GOOGLE APPS SCRIPT (ОБЛАЧНАЯ ТАБЛИЦА)
+// ==========================================
+const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzWhPaKn2V5Sm0wRvEgvaA9HqEEYQd9PNPzwUFdJdA6RUHbeIDvViUudBdovo8BBTI5/exec";
+
+// Отправка нового заказа / заявки в таблицу
+function sendOrderToCloud(orderData) {
+  fetch(GOOGLE_SCRIPT_URL, {
+    method: "POST",
+    mode: "no-cors",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(orderData)
+  })
+  .then(() => {
+    console.log("Заказ успешно отправлен в Google Таблицу!");
+  })
+  .catch(error => console.error("Ошибка отправки в облако:", error));
+}
+
+// Загрузка всех заказов из таблицы для админки
+function loadOrdersFromCloud(callback) {
+  fetch(GOOGLE_SCRIPT_URL)
+    .then(response => response.json())
+    .then(orders => {
+      console.log("Заказы получены из облака:", orders);
+      if (typeof callback === 'function') callback(orders);
+    })
+    .catch(error => console.error("Ошибка загрузки заказов из облака:", error));
+}
+// ==========================================
+
 async function saveRepairToCloud(repairData) {
   if (!db) return;
   try {
@@ -1533,27 +1565,26 @@ function renderAdminWebSubmissions() {
   const tbody = document.getElementById('adminWebSubmissionsBody');
   if (!tbody) return;
 
-  if (webSubmissions.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:15px;color:var(--text-secondary)">Немає нових заяв з сайту</td></tr>';
-    return;
-  }
+  // Загружаем данные из облака для отображения в админке
+  loadOrdersFromCloud(function(cloudOrders) {
+    if (!cloudOrders || cloudOrders.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:15px;color:var(--text-secondary)">Немає нових заяв з сайту в облаці</td></tr>';
+      return;
+    }
 
-  tbody.innerHTML = webSubmissions.slice().reverse().map((sub, i) => {
-    const realIdx = webSubmissions.length - 1 - i;
-    return `<tr>
-      <td>${new Date(sub.date).toLocaleString()}</td>
-      <td><b>${sub.name}</b></td>
-      <td><a href="tel:${sub.phone}" style="color:var(--accent-blue)">${sub.phone}</a></td>
-      <td><span class="badge-device">${sub.device}</span></td>
-      <td>${sub.fault}</td>
-      <td>
-        <div style="display:flex;gap:6px">
-          <button class="btn btn-sm btn-success" onclick="completeWebSubmission(${realIdx})">✅ Виконати</button>
-          <button class="btn btn-sm btn-danger" onclick="deleteWebSubmission(${realIdx})">✕</button>
-        </div>
-      </td>
-    </tr>`;
-  }).join('');
+    tbody.innerHTML = cloudOrders.slice().reverse().map((sub, i) => {
+      return `<tr>
+        <td>${sub.date || ''}</td>
+        <td><b>${sub.name || ''}</b></td>
+        <td><a href="tel:${sub.phone || ''}" style="color:var(--accent-blue)">${sub.phone || ''}</a></td>
+        <td><span class="badge-device">Замовлення</span></td>
+        <td>${sub.service || ''}</td>
+        <td>
+          <span style="color:var(--accent-green);font-weight:700">${sub.status || 'Новий'}</span>
+        </td>
+      </tr>`;
+    }).join('');
+  });
 }
 
 function deleteWebSubmission(index) {
@@ -2291,8 +2322,12 @@ function submitRepairOrder(e) {
   if (!phone || phone.length < 5) { alert('Введіть коректний номер!'); return; }
   
   const newSub = {
-    name, phone, address: address || 'Кам\'янське', device, fault, date: new Date().toISOString()
+    name, phone, address: address || 'Кам\'янське', device: device, service: fault, status: 'Новий', date: new Date().toISOString()
   };
+  
+  // Отправляем в Google Таблицу через наш скрипт
+  sendOrderToCloud(newSub);
+
   webSubmissions.push(newSub);
   saveWebSubmissions();
 
@@ -2315,9 +2350,9 @@ function submitRepairOrder(e) {
     allRepairs.push(newAutoRepair);
     saveRepairs();
 
-    alert(`✅ Заявку успішно оформлено!\n\nОскільки ви увійшли на сайт, вам автоматично призначено код квитанції: #${randCode}\n\nВи можете переглянути його у своєму Особистому кабінеті (у вкладці «Мої ремонти») або перевірити статус на головній сторінці!`);
+    alert(`✅ Заявку успішно оформлено та надіслано в облачну базу!\n\nОскільки ви увійшли на сайт, вам автоматично призначено код квитанції: #${randCode}\n\nВи можете переглянути його у своєму Особистому кабінеті (у вкладці «Мої ремонти») або перевірити статус на головній сторінці!`);
   } else {
-    alert('✅ Заявку успішно надіслано! Наш інженер зв\'яжеться з вами найближчим часом для уточнення деталей та оформлення квитанції.');
+    alert('✅ Заявку успішно надіслано в облачну базу! Наш інженер зв\'яжеться з вами найближчим часом для уточнення деталей та оформлення квитанції.');
   }
 
   document.getElementById('repName').value = '';
@@ -2633,3 +2668,4 @@ document.addEventListener('DOMContentLoaded', () => {
   } catch(e) { console.error('Init error:', e); }
 });
 </script>
+</html>
