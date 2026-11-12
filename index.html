@@ -869,7 +869,22 @@ nav a{font-size:9px;padding:3px 6px}
 </div>
 </div>
 </div>
-<div class="card-box"><h3 style="font-size:15px;margin-bottom:10px">📊 Історія відвідувань</h3><div class="admin-table-wrap"><table class="admin-table" id="visitorsTable"><thead><tr><th>Час</th><th>Місто</th><th>Пристрій</th><th>Платформа</th><th>Ядра / Пам'ять</th></tr></thead><tbody id="visitorsTableBody"></tbody></table></div></div>
+<div class="card-box">
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:12px">
+    <h3 style="font-size:15px;margin-bottom:0">📊 Історія відвідувань (Архів за рік)</h3>
+    <div style="display:flex;gap:8px;align-items:center">
+      <label style="font-size:11px;color:var(--text-secondary)">Виберіть дату:</label>
+      <input type="date" id="visitorsDateFilter" class="input-field" style="margin-top:0;width:150px;padding:6px 10px" onchange="renderVisitorsTable()">
+      <button class="btn btn-sm btn-outline" onclick="document.getElementById('visitorsDateFilter').value='';renderVisitorsTable()">Всі дати</button>
+    </div>
+  </div>
+  <div class="admin-table-wrap">
+    <table class="admin-table" id="visitorsTable">
+      <thead><tr><th>Час</th><th>Місто</th><th>Пристрій</th><th>Платформа</th><th>Ядра / Пам'ять</th></tr></thead>
+      <tbody id="visitorsTableBody"></tbody>
+    </table>
+  </div>
+</div>
 </div>
 
 <!-- ТАБ 2: ОБЛІК ЗАМОВЛЕНЬ ТА КАЛЬКУЛЯТОР ПРИБУТКУ -->
@@ -896,7 +911,7 @@ nav a{font-size:9px;padding:3px 6px}
 <label style="font-size:11px;color:var(--text-secondary)">Виберіть клієнта (з сайту або вручну):</label>
 <select id="ledgerClientSource" class="select-field" onchange="onLedgerClientSelectChange()">
 <option value="manual">✍️ Ввести вручну</option>
-<option value="site_list" disabled>--- Зареєстровані користувачі ---</option>
+<option value="user_list" disabled>--- Зареєстровані користувачі ---</option>
 </select>
 </div>
 <div>
@@ -1099,6 +1114,63 @@ try {
 } catch(e) { 
   console.log('Помилка підключення Firebase:', e); 
 }
+
+// РЕАЛЬНЫЙ ТРЕКИНГ ПОСЕТИТЕЛЕЙ ЧЕРЕЗ FIREBASE
+async function logVisitorToCloud() {
+  if (!db) return;
+  // Проверяем, записывали ли уже в этой сессии (чтобы F5 не накручивал)
+  if (sessionStorage.getItem('visited_logged')) return;
+  sessionStorage.setItem('visited_logged', 'true');
+
+  let city = "Кам'янське";
+  try {
+    const res = await fetch('https://ipapi.co/json/');
+    const data = await res.json();
+    if (data && data.city) city = data.city;
+  } catch(e) {}
+
+  const isMobile = /Mobi|Android/i.test(navigator.userAgent);
+  const device = isMobile ? 'Смартфон' : 'ПК / Ноутбук';
+  const platform = navigator.platform || navigator.userAgentData?.platform || 'Unknown';
+  const cores = navigator.hardwareConcurrency || 'N/A';
+  const memory = navigator.deviceMemory ? navigator.deviceMemory + ' GB' : 'N/A';
+  
+  const now = new Date();
+  const dateStr = now.toISOString().slice(0, 10); // YYYY-MM-DD для удобной фильтрации по датам
+  const timeStr = now.toLocaleString();
+
+  const visitorData = {
+    date: dateStr,
+    time: timeStr,
+    city,
+    device,
+    platform,
+    cores,
+    memory,
+    timestamp: Date.now()
+  };
+
+  try {
+    await db.collection("visitors").add(visitorData);
+    console.log("Визит успешно записан в Firebase!");
+  } catch(e) {
+    console.error("Ошибка записи визита:", e);
+  }
+}
+logVisitorToCloud();
+
+// СЕРВИС ОНЛАЙН СТАТУСА (HEARTBEAT)
+function updateOnlinePresence() {
+  if (!db) return;
+  const clientId = localStorage.getItem('matrix_client_uuid') || Math.random().toString(36).substring(2);
+  localStorage.setItem('matrix_client_uuid', clientId);
+  
+  db.collection("online_users").doc(clientId).set({
+    lastActive: Date.now()
+  }).catch(() => {});
+}
+setInterval(updateOnlinePresence, 20000);
+updateOnlinePresence();
 
 // ==========================================
 // ИНТЕГРАЦИЯ С GOOGLE APPS SCRIPT (ОБЛАЧНАЯ ТАБЛИЦА)
@@ -1579,47 +1651,33 @@ function renderAdminWebSubmissions() {
         <td><span class="badge-device">Замовлення</span></td>
         <td>${sub.service || ''}</td>
         <td>
-          <span style="color:var(--accent-green);font-weight:700">${sub.status || 'Новий'}</span>
+          <button class="btn btn-sm btn-danger" onclick="deleteCloudSubmission('${sub.id || i}')" title="Видалити">✕</button>
         </td>
       </tr>`;
     }).join('');
   });
 }
 
-function deleteWebSubmission(index) {
-  if (confirm('Видалити цю заявку з сайту?')) {
-    webSubmissions.splice(index, 1);
-    saveWebSubmissions();
-    renderAdminWebSubmissions();
-    showToast('🗑️ Заявку видалено');
+function deleteCloudSubmission(id) {
+  if (confirm('Видалити цю заявку з бази?')) {
+    if (db) {
+      db.collection("orders").doc(id).delete().then(() => {
+        showToast('🗑️ Заявку видалено');
+        renderAdminWebSubmissions();
+      }).catch(err => {
+        // Если это локальный индекс или ошибка
+        webSubmissions.splice(id, 1);
+        saveWebSubmissions();
+        renderAdminWebSubmissions();
+        showToast('🗑️ Заявку видалено');
+      });
+    } else {
+      webSubmissions.splice(id, 1);
+      saveWebSubmissions();
+      renderAdminWebSubmissions();
+      showToast('🗑️ Заявку видалено');
+    }
   }
-}
-
-function completeWebSubmission(index) {
-  const sub = webSubmissions[index];
-  if (!sub) return;
-
-  const priceInput = prompt(`Введіть суму за роботу (грн) для замовника ${sub.name}:`, "500");
-  if (priceInput === null) return;
-  const price = parseFloat(priceInput) || 0;
-
-  ledgerEntries.push({
-    id: Date.now(),
-    date: new Date().toISOString().slice(0, 10),
-    name: sub.name,
-    phone: sub.phone,
-    address: sub.address || 'Кам\'янське',
-    device: sub.device,
-    work: sub.fault,
-    price
-  });
-  saveLedger();
-
-  webSubmissions.splice(index, 1);
-  saveWebSubmissions();
-  renderAdminWebSubmissions();
-  renderLedger();
-  showToast('✅ Заявку виконано та перенесено в облік замовлень!');
 }
 
 function updateRepairStatus(code, newStatus) {
@@ -1780,13 +1838,36 @@ try {
 }
 
 let moderators = JSON.parse(localStorage.getItem('matrix_moderators') || '[]');
-let visitors = JSON.parse(localStorage.getItem('matrix_visitors') || '[]');
-visitors = visitors.filter(v => v.cores !== undefined && v.memory !== undefined);
-localStorage.setItem('matrix_visitors', JSON.stringify(visitors));
-let totalVisits = parseInt(localStorage.getItem('matrix_total_visits') || '0');
-let orders = JSON.parse(localStorage.getItem('matrix_orders') || '[]');
-let repairs = JSON.parse(localStorage.getItem('matrix_repairs') || '[]');
+let visitors = [];
+let onlineCount = 0;
 let siteOnline = localStorage.getItem('matrix_site_online') !== 'false';
+
+// Загрузка реальных посетителей и онлайн статуса из Firebase
+function fetchFirebaseAnalytics() {
+  if (!db) return;
+  // Загружаем лог посетителей
+  db.collection("visitors").orderBy("timestamp", "desc").limit(500).get().then(snapshot => {
+    visitors = [];
+    snapshot.forEach(doc => {
+      visitors.push(doc.data());
+    });
+    if (localStorage.getItem('matrix_admin') === 'true') {
+      updateAdminStats();
+    }
+  }).catch(e => console.log(e));
+
+  // Считаем онлайн (кто активен последние 60 секунд)
+  const minuteAgo = Date.now() - 60000;
+  db.collection("online_users").where("lastActive", ">", minuteAgo).get().then(snapshot => {
+    onlineCount = snapshot.size || 1;
+    const el1 = document.getElementById('statOnline');
+    const el2 = document.getElementById('modStatOnline');
+    if (el1) el1.innerText = onlineCount;
+    if (el2) el2.innerText = onlineCount;
+  }).catch(() => {});
+}
+setInterval(fetchFirebaseAnalytics, 15000);
+fetchFirebaseAnalytics();
 
 const avatarPresets = ['👤','🦊','🐺','🦁','🐉','🦅','🦈','🚀','⚡','🎯','🏆','👑','🌟','🔥','💎','🎮','🌈','🪐','🌙','☀️'];
 
@@ -1949,7 +2030,7 @@ container.innerHTML = `<div style="text-align:center;padding:40px 0;color:var(--
 return;
 }
 
-const userOrders = (orders || []).filter(o => o.userId === currentUser.id) || [];
+const userOrders = (ledgerEntries || []).filter(o => o.phone === currentUser.phone) || [];
 const userRepairs = (allRepairs || []).filter(r => r.clientId == currentUser.id) || [];
 const totalSpent = userOrders.reduce((sum, o) => sum + o.price, 0);
 const levelMap = [{ min: 0, name: 'Новачок', discount: 0, icon: '🟢' }, { min: 1, name: 'Майстер', discount: 5, icon: '🔵' }, { min: 5, name: 'Експерт', discount: 10, icon: '🟣' }, { min: 10, name: 'Легенда', discount: 15, icon: '🌟' }];
@@ -2065,7 +2146,7 @@ ${currentUser.cardNumber ? `<div style="margin-top:10px;font-size:12px;color:var
 </div>
 <div id="profileOrders" class="profile-tab">
 <h3 style="font-size:16px;color:var(--accent-purple);margin-bottom:10px">📦 Історія замовлень</h3>
-<div class="profile-orders">${userOrders.length === 0 ? '<p style="color:var(--text-secondary);text-align:center;padding:20px;">Немає замовлень</p>' : userOrders.slice().reverse().map(o => `<div class="profile-order"><span class="order-name">${o.name}</span><span class="order-price">${o.price.toLocaleString()} грн</span><span class="order-status ${o.status === 'done' ? 'done' : 'progress'}">${o.status === 'done' ? '✅ Виконано' : '🔄 В роботі'}</span></div>`).join('')}</div>
+<div class="profile-orders">${userOrders.length === 0 ? '<p style="color:var(--text-secondary);text-align:center;padding:20px;">Немає замовлень</p>' : userOrders.slice().reverse().map(o => `<div class="profile-order"><span class="order-name">${o.work} (${o.device})</span><span class="order-price">${o.price.toLocaleString()} грн</span><span class="order-status done">✅ Виконано</span></div>`).join('')}</div>
 </div>
 <div id="profileAchievements" class="profile-tab">
 <h3 style="font-size:16px;color:var(--accent-purple);margin-bottom:10px">🏅 Досягнення</h3>
@@ -2173,8 +2254,8 @@ const data = [];
 for (let i = 0; i < days; i++) {
 const d = new Date();
 d.setDate(d.getDate() - (days - 1 - i));
-const key = d.toDateString();
-const count = visitors.filter(v => new Date(v.time).toDateString() === key).length;
+const key = d.toISOString().slice(0, 10);
+const count = visitors.filter(v => v.date === key).length;
 data.push(count);
 }
 const max = Math.max(...data, 1);
@@ -2220,31 +2301,69 @@ if (mod) { link.style.display = 'inline-block'; if (nameEl) nameEl.textContent =
 else { link.style.display = 'none'; }
 }
 
+function renderVisitorsTable() {
+  const tbody = document.getElementById('visitorsTableBody');
+  if (!tbody) return;
+  const dateFilter = document.getElementById('visitorsDateFilter').value;
+
+  const filtered = visitors.filter(v => {
+    if (!dateFilter) return true;
+    return v.date === dateFilter;
+  });
+
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-secondary)">Немає даних за обрану дату</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(v => `
+    <tr>
+      <td>${v.time}</td>
+      <td>📍 ${v.city}</td>
+      <td><span class="badge-device">${v.device}</span></td>
+      <td>${v.platform}</td>
+      <td>${v.cores} ядер / ${v.memory}</td>
+    </tr>
+  `).join('');
+}
+
 function updateAdminStats() {
-document.getElementById('statVisitors').innerText = totalVisits || visitors.length;
-const now = new Date(); const today = now.toDateString();
-const todayOrders = orders.filter(o => new Date(o.date).toDateString() === today);
+document.getElementById('statVisitors').innerText = visitors.length;
+const now = new Date(); const today = now.toISOString().slice(0, 10);
+const todayOrders = ledgerEntries.filter(o => o.date === today);
 document.getElementById('statOrders').innerText = todayOrders.length;
 document.getElementById('statRepairs').innerText = allRepairs.filter(r => r.status < 6).length;
-document.getElementById('statOnline').innerText = Math.floor(Math.random() * 5) + 1;
-const tbody = document.getElementById('visitorsTableBody');
-if (visitors.length === 0) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-secondary)">Немає даних</td></tr>'; }
-else { tbody.innerHTML = visitors.slice().reverse().map(v => `<tr><td>${v.time}</td><td>${v.city}</td><td><span class="badge-device">${v.device}</span></td><td>${v.platform}</td><td>${v.cores} ядер / ${v.memory}</td></tr>`).join(''); }
+document.getElementById('statOnline').innerText = onlineCount;
+renderVisitorsTable();
 drawAdminChart();
 }
 function updateModeratorStats() {
-document.getElementById('modStatVisitors').innerText = totalVisits || visitors.length;
-document.getElementById('modStatOrders').innerText = orders.filter(o => new Date(o.date).toDateString() === new Date().toDateString()).length;
+document.getElementById('modStatVisitors').innerText = visitors.length;
+document.getElementById('modStatOrders').innerText = ledgerEntries.filter(o => o.date === new Date().toISOString().slice(0, 10)).length;
 document.getElementById('modStatRepairs').innerText = allRepairs.filter(r => r.status < 6).length;
-document.getElementById('modStatOnline').innerText = Math.floor(Math.random() * 5) + 1;
+document.getElementById('modStatOnline').innerText = onlineCount;
 const tbody = document.getElementById('modVisitorsTableBody');
 if (visitors.length === 0) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-secondary)">Немає даних</td></tr>'; }
 else { tbody.innerHTML = visitors.slice().reverse().map(v => `<tr><td>${v.time}</td><td>${v.city}</td><td><span class="badge-device">${v.device}</span></td><td>${v.platform}</td><td>${v.cores} ядер / ${v.memory}</td></tr>`).join(''); }
 }
 function adminAction(action) {
-if (action === 'clearVisitors') { if (confirm('Очистити історію?')) { visitors = []; localStorage.setItem('matrix_visitors', JSON.stringify(visitors)); totalVisits = 0; localStorage.setItem('matrix_total_visits', '0'); updateAdminStats(); showToast('🗑️ Очищено'); } }
-else if (action === 'exportData') { const data = JSON.stringify({ visitors, totalVisits, orders, repairs, ledgerEntries, moderators, users }, null, 2); const blob = new Blob([data], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `excellent_export_${new Date().toISOString().slice(0, 10)}.json`; a.click(); showToast('📤 Експортовано'); }
-else if (action === 'refreshStats') { updateAdminStats(); showToast('🔄 Оновлено'); }
+if (action === 'clearVisitors') { 
+  if (confirm('Очистити всю історію відвідувань у базі?')) { 
+    if (db) {
+      db.collection("visitors").get().then(snapshot => {
+        let batch = db.batch();
+        snapshot.docs.forEach(doc => batch.delete(doc.ref));
+        return batch.commit();
+      }).then(() => {
+        visitors = [];
+        updateAdminStats();
+        showToast('🗑️ Історію очищено');
+      });
+    }
+  } 
+}
+else if (action === 'exportData') { const data = JSON.stringify({ visitors, orders: ledgerEntries, repairs: allRepairs, ledgerEntries, moderators, users }, null, 2); const blob = new Blob([data], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `excellent_export_${new Date().toISOString().slice(0, 10)}.json`; a.click(); showToast('📤 Експортовано'); }
+else if (action === 'refreshStats') { fetchFirebaseAnalytics(); updateAdminStats(); showToast('🔄 Оновлено'); }
 }
 function toggleSiteStatus() { siteOnline = !siteOnline; localStorage.setItem('matrix_site_online', siteOnline); updateSiteStatus(); showToast(siteOnline ? '🟢 Сайт онлайн' : '🔴 Сайт офлайн'); }
 function updateSiteStatus() {
@@ -2258,11 +2377,20 @@ function checkoutOrder() {
 if (cart.length === 0) { alert('Кошик порожній!'); return; }
 if (!currentUser) { toggleCartModal(); toggleAuthModal(true); return; }
 cart.forEach(item => { 
-  const ord = { name: item.name, price: item.price, date: new Date().toISOString(), userId: currentUser.id, status: 'progress' };
-  orders.push(ord);
-  saveOrderToCloud(ord);
+  const ord = { 
+    id: Date.now() + Math.random(),
+    date: new Date().toISOString().slice(0, 10),
+    name: currentUser.name,
+    phone: currentUser.phone || '0634569426',
+    address: currentUser.address || 'Кам\'янське',
+    device: 'Магазин / Товар',
+    work: item.name,
+    price: item.price * (item.qty || 1)
+  };
+  ledgerEntries.push(ord);
+  saveLedgerToCloud(ord);
 });
-localStorage.setItem('matrix_orders', JSON.stringify(orders));
+saveLedger();
 if (currentUser) { currentUser.ordersCount = (currentUser.ordersCount || 0) + cart.reduce((s,item) => s + (item.qty || 1), 0); currentUser.bonuses = (currentUser.bonuses || 0) + cart.reduce((s,item) => s + (item.qty || 1) * 10, 0); localStorage.setItem('matrix_current_user', JSON.stringify(currentUser)); }
 alert(`✅ Замовлення оформлено! +${cart.reduce((s,item) => s + (item.qty || 1), 0) * 10} бонусів!`);
 cart = []; saveCart(); updateCartUI(); toggleCartModal();
