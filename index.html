@@ -1069,29 +1069,35 @@ nav a{font-size:9px;padding:3px 6px}
 </div>
 
 <footer>
-<p>© 2001–2026 EXCELLENT Hardware Lab — Комп'ютерна майстерня у Камянському[cite: 3]. Всі права захищено.</p>
+<p>© 2001–2026 EXCELLENT Hardware Lab — Комп'ютерна майстерня у Камянському. Всі права захищено.</p>
 <p style="margin-top:4px;font-size:10px"><a onclick="navigateTo('/privacy')" style="color:var(--accent-blue);cursor:pointer">Політика конфіденційності</a></p>
 </footer>
 
+<!-- Firebase SDK через compat для повної сумісності з кнопками та функціями -->
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
 <script>
 const firebaseConfig = {
-  apiKey: "ТВОЙ_API_KEY",
-  authDomain: "ТВОЙ_PROJECT.firebaseapp.com",
-  projectId: "ТВОЙ_PROJECT_ID",
-  storageBucket: "ТВОЙ_PROJECT.appspot.com",
-  messagingSenderId: "ТВОЙ_SENDER_ID",
-  appId: "ТВОЙ_APP_ID"
+  apiKey: "AIzaSyCAVFBOWKpeMhNCv7tQonh3waDWtMF6E8w",
+  authDomain: "excellent-lab.firebaseapp.com",
+  projectId: "excellent-lab",
+  storageBucket: "excellent-lab.firebasestorage.app",
+  messagingSenderId: "934005050015",
+  appId: "1:934005050015:web:dc01b54b6669c0dcc430aa",
+  measurementId: "G-T4L3RYPNLM"
 };
 
 let firebaseAuth = null;
+let db = null;
 try {
-  if (firebaseConfig.apiKey !== "ТВОЙ_API_KEY") {
-    firebase.initializeApp(firebaseConfig);
-    firebaseAuth = firebase.auth();
-  }
-} catch(e) { console.log('Firebase не налаштований'); }
+  firebase.initializeApp(firebaseConfig);
+  firebaseAuth = firebase.auth();
+  db = firebase.firestore();
+  console.log("🔥 Firebase успішно підключено!");
+} catch(e) { 
+  console.log('Помилка підключення Firebase:', e); 
+}
 
 function setTheme(theme) {
 document.documentElement.setAttribute('data-theme', theme);
@@ -1316,7 +1322,7 @@ function addLedgerEntry() {
     date,
     name,
     phone,
-    address: address || 'Кам\'янське[cite: 3]',
+    address: address || 'Кам\'янське',
     device: device || 'ПК / Ноутбук',
     work,
     price
@@ -1453,7 +1459,7 @@ function createRepair() {
     code, clientId, clientName, clientPhone, desc,
     status: 1,
     date: new Date().toISOString(),
-    master: "Спартак[cite: 3]"
+    master: "Спартак"
   };
 
   allRepairs.push(newRepair);
@@ -1543,7 +1549,7 @@ function completeWebSubmission(index) {
     date: new Date().toISOString().slice(0, 10),
     name: sub.name,
     phone: sub.phone,
-    address: sub.address || 'Кам\'янське[cite: 3]',
+    address: sub.address || 'Кам\'янське',
     device: sub.device,
     work: sub.fault,
     price
@@ -1574,7 +1580,7 @@ function updateRepairStatus(code, newStatus) {
           date: new Date().toISOString().slice(0, 10),
           name: repair.clientName,
           phone: repair.clientPhone || '0634569426',
-          address: 'Кам\'янське[cite: 3]',
+          address: 'Кам\'янське',
           device: 'Ремонт/Техніка',
           work: repair.desc,
           price
@@ -1972,7 +1978,7 @@ ${repairsHtml}
 <div class="card-box"><h4 style="color:var(--accent-blue);font-size:14px;margin-bottom:15px">👤 Особисті дані</h4>
 <div class="settings-group"><label>Ім'я</label><input type="text" id="settingsName" class="input-field" value="${currentUser.name}" style="margin-top:0"></div>
 <div class="settings-group"><label>Телефон</label><input type="tel" id="settingsPhone" class="input-field" value="${currentUser.phone || ''}" placeholder="063 456 94 26" style="margin-top:0"></div>
-<div class="settings-group"><label>Адреса</label><input type="text" id="settingsAddress" class="input-field" value="${currentUser.address || ''}" placeholder="Кам'янське[cite: 3]" style="margin-top:0"></div>
+<div class="settings-group"><label>Адреса</label><input type="text" id="settingsAddress" class="input-field" value="${currentUser.address || ''}" placeholder="Кам'янське" style="margin-top:0"></div>
 <div class="settings-group"><label>Аватар</label>
 <div class="avatar-presets">${avatarsHtml}</div>
 <input type="text" id="settingsAvatar" class="input-field" value="${currentUser.avatar || '👤'}" placeholder="👤 або https://..." style="margin-top:8px">
@@ -2252,7 +2258,7 @@ function submitRepairOrder(e) {
   if (!phone || phone.length < 5) { alert('Введіть коректний номер!'); return; }
   
   const newSub = {
-    name, phone, address: address || 'Кам\'янське[cite: 3]', device, fault, date: new Date().toISOString()
+    name, phone, address: address || 'Кам\'янське', device, fault, date: new Date().toISOString()
   };
   webSubmissions.push(newSub);
   saveWebSubmissions();
@@ -2271,7 +2277,7 @@ function submitRepairOrder(e) {
       desc: `${device} - ${fault}`,
       status: 1,
       date: new Date().toISOString(),
-      master: "Спартак[cite: 3]"
+      master: "Спартак"
     };
     allRepairs.push(newAutoRepair);
     saveRepairs();
@@ -2335,13 +2341,13 @@ function toggleHelper() { const bubble = document.getElementById('helperBubble')
 function renderPopularQuestions() { const container = document.getElementById('popularQuestions'); const questions = ['Як почистити ноутбук?','Чому ПК не вмикається?','Як вибрати термопасту?','Скільки коштує діагностика?']; container.innerHTML = questions.map(q => `<button class="pop-btn" onclick="askPopular('${q}')">${q}</button>`).join(''); }
 
 const allReviews = [
-{name:'Андрій Коваленко',city:'Кам\'янське[cite: 3]',device:'Ноутбук ASUS ROG',text:'Дякую майстру Олександру! Ноутбук перестав вмикатися після залиття кавою. За 2 години зробили діагностику, замінили клавіатуру та почистили плату. Працює як новий!',stars:5,badge:'⭐ Топ-відгук'},
-{name:'Катерина Мельник',city:'Кам\'янське[cite: 3]',device:'Steam Deck',text:'Приїхав до мене Steam Deck з дрифтом стіків. Майстер Дмитро за годину замінив на Hall Effect — тепер усе літає!',stars:5,badge:''},
-{name:'Ігор Шевченко',city:'Кам\'янське[cite: 3]',device:'Ігровий ПК',text:'Звертався з проблемою перегріву процесора. Замінили термоінтерфейс на PTM7950, почистили систему охолодження. Температура впала з 95°C до 72°C!',stars:5,badge:'🔥 Найкраща рекомендація'},
-{name:'Олена Петренко',city:'Кам\'янське[cite: 3]',device:'MacBook Pro',text:'Дуже боялась віддавати MacBook у ремонт, але хлопці заспокоїли. Замінили батарею та термопасту, працює 8 годин без зарядки.',stars:5,badge:''},
-{name:'Сергій Мороз',city:'Кам\'янське[cite: 3]',device:'Ігровий ПК',text:'Шумів блок живлення, думав міняти. Виявилось — пил. Почистили, замінили термопасту, тепер тихенько працює. Дякую!',stars:5,badge:''},
-{name:'Юлія Бондар',city:'Кам\'янське[cite: 3]',device:'Ноутбук Lenovo',text:'Екран тріснув після падіння. Замінили матрицю за день, ціна приємно здивувала. Рекомендую!',stars:5,badge:''},
-{name:'Максим Гончар',city:'Кам\'янське[cite: 3]',device:'PS5',text:'PS5 грівся як піч. Замінили рідкий метал на PTM7950 — температура впала на 15 градусів, шум зник.',stars:5,badge:'🎮 PS5'}
+{name:'Андрій Коваленко',city:'Кам\'янське',device:'Ноутбук ASUS ROG',text:'Дякую майстру Олександру! Ноутбук перестав вмикатися після залиття кавою. За 2 години зробили діагностику, замінили клавіатуру та почистили плату. Працює як новий!',stars:5,badge:'⭐ Топ-відгук'},
+{name:'Катерина Мельник',city:'Кам\'янське',device:'Steam Deck',text:'Приїхав до мене Steam Deck з дрифтом стіків. Майстер Дмитро за годину замінив на Hall Effect — тепер усе літає!',stars:5,badge:''},
+{name:'Ігор Шевченко',city:'Кам\'янське',device:'Ігровий ПК',text:'Звертався з проблемою перегріву процесора. Замінили термоінтерфейс на PTM7950, почистили систему охолодження. Температура впала з 95°C до 72°C!',stars:5,badge:'🔥 Найкраща рекомендація'},
+{name:'Олена Петренко',city:'Кам\'янське',device:'MacBook Pro',text:'Дуже боялась віддавати MacBook у ремонт, але хлопці заспокоїли. Замінили батарею та термопасту, працює 8 годин без зарядки.',stars:5,badge:''},
+{name:'Сергій Мороз',city:'Кам\'янське',device:'Ігровий ПК',text:'Шумів блок живлення, думав міняти. Виявилось — пил. Почистили, замінили термопасту, тепер тихенько працює. Дякую!',stars:5,badge:''},
+{name:'Юлія Бондар',city:'Кам\'янське',device:'Ноутбук Lenovo',text:'Екран тріснув після падіння. Замінили матрицю за день, ціна приємно здивувала. Рекомендую!',stars:5,badge:''},
+{name:'Максим Гончар',city:'Кам\'янське',device:'PS5',text:'PS5 грівся як піч. Замінили рідкий метал на PTM7950 — температура впала на 15 градусів, шум зник.',stars:5,badge:'🎮 PS5'}
 ];
 
 const reviewsBatchSize = 3;
@@ -2409,7 +2415,7 @@ else { header.classList.remove('hidden'); }
 lastScrollY = currentScrollY;
 });
 
-// ИГРА
+// ІГРА
 try {
   const canvas = document.getElementById('gameCanvas');
   if (canvas) {
@@ -2534,7 +2540,7 @@ try {
         gameOver = true;
         gameRunning = false;
         document.getElementById('gameOverlay').style.display = 'flex';
-        document.getElementById('ovText').innerHTML = `<span class="win">🏆 ПОБЕДА!</span>`;
+        document.getElementById('ovText').innerHTML = `<span class="win">🏆 ПЕРЕМОГА!</span>`;
         document.getElementById('restartBtn').style.display = 'inline-block';
       }
     };
