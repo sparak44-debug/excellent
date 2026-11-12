@@ -1565,7 +1565,6 @@ function renderAdminWebSubmissions() {
   const tbody = document.getElementById('adminWebSubmissionsBody');
   if (!tbody) return;
 
-  // Загружаем данные из облака для отображения в админке
   loadOrdersFromCloud(function(cloudOrders) {
     if (!cloudOrders || cloudOrders.length === 0) {
       tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:15px;color:var(--text-secondary)">Немає нових заяв з сайту в облаці</td></tr>';
@@ -2325,35 +2324,31 @@ function submitRepairOrder(e) {
     name, phone, address: address || 'Кам\'янське', device: device, service: fault, status: 'Новий', date: new Date().toISOString()
   };
   
-  // Отправляем в Google Таблицу через наш скрипт
   sendOrderToCloud(newSub);
+
+  let randCode = Math.floor(Math.random() * 9990 + 10).toString();
+  while(allRepairs.some(r => r.code === randCode)) {
+    randCode = Math.floor(Math.random() * 9990 + 10).toString();
+  }
+  
+  const newAutoRepair = {
+    code: randCode,
+    clientId: currentUser ? currentUser.id : null,
+    clientName: name,
+    clientPhone: phone,
+    desc: `${device} - ${fault}`,
+    status: 1,
+    date: new Date().toISOString(),
+    master: "Спартак"
+  };
+
+  allRepairs.push(newAutoRepair);
+  saveRepairs();
 
   webSubmissions.push(newSub);
   saveWebSubmissions();
 
-  if (currentUser) {
-    let randCode = Math.floor(Math.random() * 9990 + 10).toString();
-    while(allRepairs.some(r => r.code === randCode)) {
-      randCode = Math.floor(Math.random() * 9990 + 10).toString();
-    }
-    
-    const newAutoRepair = {
-      code: randCode,
-      clientId: currentUser.id,
-      clientName: name,
-      clientPhone: phone,
-      desc: `${device} - ${fault}`,
-      status: 1,
-      date: new Date().toISOString(),
-      master: "Спартак"
-    };
-    allRepairs.push(newAutoRepair);
-    saveRepairs();
-
-    alert(`✅ Заявку успішно оформлено та надіслано в облачну базу!\n\nОскільки ви увійшли на сайт, вам автоматично призначено код квитанції: #${randCode}\n\nВи можете переглянути його у своєму Особистому кабінеті (у вкладці «Мої ремонти») або перевірити статус на головній сторінці!`);
-  } else {
-    alert('✅ Заявку успішно надіслано в облачну базу! Наш інженер зв\'яжеться з вами найближчим часом для уточнення деталей та оформлення квитанції.');
-  }
+  alert(`✅ Заявку успішно оформлено та надіслано в базу!\n\nНомер квитанції: #${randCode}\n\nДані синхронізовано з сервером, тепер вони доступні на ПК в адмінці.`);
 
   document.getElementById('repName').value = '';
   document.getElementById('repPhone').value = '';
