@@ -10,6 +10,11 @@
 <meta name="keywords" content="компьютерная мастерская, мастерская, компьютерная мастерская каменское, ремонт ПК каменское, ремонт ноутбуков Каменское, EXCELLENT, чистка ноутбука, замена термопасты, Спартак, Павло">
 <meta name="author" content="EXCELLENT Hardware Lab">
 
+<!-- Іконка сайту та фавикон для Google -->
+<link rel="icon" type="image/jpeg" href="logo.jpg">
+<link rel="apple-touch-icon" href="logo.jpg">
+<meta property="og:site_name" content="EXCELLENT">
+
 <!-- Open Graph для соцмереж і месенджерів -->
 <meta property="og:title" content="EXCELLENT — Комп'ютерна майстерня у Камянському">
 <meta property="og:description" content="Якісний ремонт комп'ютерів, ноутбуків та ігрових консолей у Камянському. Доступні ціни та гарантія.">
@@ -102,7 +107,7 @@ header.hidden{transform:translateY(-100%)}
 .theme-selector .theme-btn:hover{transform:scale(1.15);border-color:var(--text-primary)}
 .theme-selector .theme-btn.active{border-color:var(--text-primary);box-shadow:0 0 10px var(--shadow-color)}
 nav{display:flex;gap:6px;flex-wrap:wrap;border-top:1px solid rgba(255,255,255,.05);padding-top:8px}
-nav a{color:var(--text-primary);text-decoration:none;font-weight:600;font-size:12px;padding:6px 12px;border-radius:8px;cursor:pointer;transition:.2s;border:1px solid rgba(168,85,247,.15);background:var(--card-bg)}
+nav a{color:var(--text-primary);text-decoration:none;font-weight:600;font-size:12px;padding:6px 12px;border-radius:8px;cursor:pointer;transition:.2s;border:1px solid rgba(168,85,247,.15);background:var(--card-bg);position:relative}
 nav a:hover{color:#fff;background:rgba(168,85,247,.25);border-color:var(--accent-purple)}
 .page-view{display:none}.page-view.active-page{display:block}
 .gallery-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:15px;margin-top:20px}
@@ -260,7 +265,7 @@ nav a:hover{color:#fff;background:rgba(168,85,247,.25);border-color:var(--accent
 .admin-header .admin-name{font-size:18px;font-weight:900;color:var(--text-primary)}
 .admin-header .admin-role{font-size:11px;color:var(--text-secondary)}
 .admin-tabs{display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap;border-bottom:1px solid var(--border-color);padding-bottom:10px}
-.admin-tabs button{background:var(--card-bg);border:1px solid var(--border-color);color:var(--text-secondary);padding:8px 16px;cursor:pointer;font-weight:700;font-size:12px;transition:.2s;border-radius:10px}
+.admin-tabs button{background:var(--card-bg);border:1px solid var(--border-color);color:var(--text-secondary);padding:8px 16px;cursor:pointer;font-weight:700;font-size:12px;transition:.2s;border-radius:10px;position:relative}
 .admin-tabs button.active{color:var(--text-primary);border-color:var(--accent-purple);background:rgba(168,85,247,.15)}
 .admin-tab-content{display:none}
 .admin-tab-content.active{display:block}
@@ -387,7 +392,7 @@ footer a:hover{text-decoration:underline}
 .game-wrapper{display:flex;flex-direction:column;align-items:center;padding:15px 0;width:100%}
 .platformer-combo{position:absolute;top:50px;left:50%;transform:translateX(-50%);font-size:22px;font-weight:900;color:#ffdd44;text-shadow:0 0 30px rgba(255,221,68,.5);pointer-events:none;z-index:5;opacity:0;transition:all .3s}
 .platformer-combo.show{opacity:1;transform:translateX(-50%) scale(1.2)}
-.notification-badge{position:absolute;top:-6px;right:-6px;background:var(--accent-red);color:#fff;font-size:9px;border-radius:50%;padding:1px 6px;min-width:18px;text-align:center;display:none}
+.notification-badge{position:absolute;top:-6px;right:-6px;background:var(--accent-red);color:#fff;font-size:9px;border-radius:50%;padding:1px 6px;min-width:18px;text-align:center;display:none;z-index:10}
 
 #mobileControls{display:none;position:absolute;bottom:10px;left:10px;right:10px;z-index:6;justify-content:space-between;pointer-events:none}
 #mobileControls .ctrl-group{display:flex;gap:8px;pointer-events:auto}
@@ -541,7 +546,7 @@ nav a{font-size:9px;padding:3px 6px}
 <span class="notification-badge" id="notificationBadge">0</span>
 </a>
 <a onclick="navigateTo('/game')" style="border-color:var(--accent-red);font-weight:900">🎮 Гра</a>
-<a id="adminNavLink" onclick="navigateTo('/admin')" style="display:none;border-color:var(--accent-green)">🔐 Адмін</a>
+<a id="adminNavLink" onclick="navigateTo('/admin')" style="display:none;border-color:var(--accent-green);position:relative">🔐 Адмін <span class="notification-badge" id="adminGlobalBadge">0</span></a>
 <a id="moderatorNavLink" onclick="navigateTo('/moderator')" style="display:none;border-color:var(--accent-blue)">🛡️ Модератор</a>
 </nav>
 </header>
@@ -792,8 +797,8 @@ nav a{font-size:9px;padding:3px 6px}
 
 <!-- ВКЛАДКИ АДМИНКИ -->
 <div class="admin-tabs">
-<button class="active" onclick="switchAdminTab('dashboard')">📊 Головна</button>
-<button onclick="switchAdminTab('ledger')">📋 Облік замовлень</button>
+<button class="active" onclick="switchAdminTab('dashboard')">📊 Головна <span class="notification-badge" id="tabBadgeDashboard" style="display:none">0</span></button>
+<button onclick="switchAdminTab('ledger')">📋 Облік замовлень <span class="notification-badge" id="tabBadgeLedger" style="display:none">0</span></button>
 <button onclick="switchAdminTab('repairs')">🛠️ Ремонти та квитанції</button>
 <button onclick="switchAdminTab('settings')">⚙️ Налаштування & Додатково</button>
 </div>
@@ -1118,7 +1123,6 @@ try {
 // РЕАЛЬНЫЙ ТРЕКИНГ ПОСЕТИТЕЛЕЙ ЧЕРЕЗ FIREBASE
 async function logVisitorToCloud() {
   if (!db) return;
-  // Проверяем, записывали ли уже в этой сессии (чтобы F5 не накручивал)
   if (sessionStorage.getItem('visited_logged')) return;
   sessionStorage.setItem('visited_logged', 'true');
 
@@ -1136,7 +1140,7 @@ async function logVisitorToCloud() {
   const memory = navigator.deviceMemory ? navigator.deviceMemory + ' GB' : 'N/A';
   
   const now = new Date();
-  const dateStr = now.toISOString().slice(0, 10); // YYYY-MM-DD для удобной фильтрации по датам
+  const dateStr = now.toISOString().slice(0, 10);
   const timeStr = now.toLocaleString();
 
   const visitorData = {
@@ -1172,58 +1176,45 @@ function updateOnlinePresence() {
 setInterval(updateOnlinePresence, 20000);
 updateOnlinePresence();
 
-// ==========================================
-// ИНТЕГРАЦИЯ С GOOGLE APPS SCRIPT (ОБЛАЧНАЯ ТАБЛИЦА)
-// ==========================================
 const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzWhPaKn2V5Sm0wRvEgvaA9HqEEYQd9PNPzwUFdJdA6RUHbeIDvViUudBdovo8BBTI5/exec";
 
-// Отправка нового заказа / заявки в таблицу
 function sendOrderToCloud(orderData) {
   fetch(GOOGLE_SCRIPT_URL, {
     method: "POST",
     mode: "no-cors",
-    headers: {
-      "Content-Type": "application/json"
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(orderData)
-  })
-  .then(() => {
-    console.log("Заказ успешно отправлен в Google Таблицу!");
-  })
-  .catch(error => console.error("Ошибка отправки в облако:", error));
+  }).catch(error => console.error("Ошибка отправки в облако:", error));
 }
 
-// Загрузка всех заказов из таблицы для админки
 function loadOrdersFromCloud(callback) {
   fetch(GOOGLE_SCRIPT_URL)
     .then(response => response.json())
     .then(orders => {
-      console.log("Заказы получены из облака:", orders);
       if (typeof callback === 'function') callback(orders);
     })
     .catch(error => console.error("Ошибка загрузки заказов из облака:", error));
 }
-// ==========================================
 
 async function saveRepairToCloud(repairData) {
   if (!db) return;
   try {
     await db.collection("repairs").doc(repairData.code.toString()).set(repairData);
-  } catch(e) { console.error("Помилка збереження ремонту в Firestore:", e); }
+  } catch(e) {}
 }
 
 async function saveOrderToCloud(orderData) {
   if (!db) return;
   try {
     await db.collection("orders").add(orderData);
-  } catch(e) { console.error("Помилка збереження замовлення в Firestore:", e); }
+  } catch(e) {}
 }
 
 async function saveLedgerToCloud(ledgerData) {
   if (!db) return;
   try {
     await db.collection("ledger").doc(ledgerData.id.toString()).set(ledgerData);
-  } catch(e) { console.error("Помилка збереження обліку в Firestore:", e); }
+  } catch(e) {}
 }
 
 function setTheme(theme) {
@@ -1366,7 +1357,7 @@ function toggleSubMenu(id) { const m = document.getElementById(id); m.style.disp
 
 const helperKnowledge = [
 {q:['немає зображення','нет изображения','нет изоа','нет картинки','екран чорний','экран черный','чорний екран','чорный экран','монітор не показує','монитор не показывает'],a:'🖥️ Перевір кабелі HDMI/DP. Діагностика за домовленістю!'},
-{q:['комп не вмикається','комп не включается','пк не стартує','пк не стартует','комп\'ютер не запускається','windows не грузиться','синій екран','синий экран','бсод','синя смерть'],a:'🔧 Спробуй завантажитись у безпечному режимі (F8).'},
+{q:['комп не вмикається','комп не включается','пк не стартує','пк не стартует','комп\'ютер не запускається','windows не грузиться','синій екран','синий экран','bsoд','синя смерть'],a:'🔧 Спробуй завантажитись у безпечному режимі (F8).'},
 {q:['ноутбук гріється','ноутбук нагревается','ноут сильно гріється','лептоп гарячий','перегрів ноутбука','тротлінг','fps падає'],a:'🌡️ Пил або висохла термопаста. Чистка та заміна — 550-800 грн.'},
 {q:['немає звуку','нет звука','звук пропав','пропал звук','колонки не працюють','динаміки не працюють','аудіо не працює'],a:'🔊 Перевір: чи не вимкнений звук, чи правильний пристрій вибрано.'},
 {q:['клавіатура не працює','клавиатура не работает','недрукують клавіші','залили клавіатуру','кнопки не реагують'],a:'⌨️ Якщо не працюють окремі клавіші — потрібна заміна.'},
@@ -1665,7 +1656,6 @@ function deleteCloudSubmission(id) {
         showToast('🗑️ Заявку видалено');
         renderAdminWebSubmissions();
       }).catch(err => {
-        // Если это локальный индекс или ошибка
         webSubmissions.splice(id, 1);
         saveWebSubmissions();
         renderAdminWebSubmissions();
@@ -1726,10 +1716,16 @@ function switchAdminTab(tabName) {
   if (tabName === 'dashboard') {
     document.getElementById('adminTabDashboard').classList.add('active');
     document.querySelectorAll('.admin-tabs button')[0].classList.add('active');
+    // Сбрасываем бейдж посетителей при открытии дашборда
+    localStorage.setItem('admin_last_seen_visitors', visitors.length);
+    updateAdminNotifications();
   } else if (tabName === 'ledger') {
     document.getElementById('adminTabLedger').classList.add('active');
     document.querySelectorAll('.admin-tabs button')[1].classList.add('active');
     renderLedger();
+    // Сбрасываем бейдж заказов при открытии учетов
+    localStorage.setItem('admin_last_seen_ledger', ledgerEntries.length);
+    updateAdminNotifications();
   } else if (tabName === 'repairs') {
     document.getElementById('adminTabRepairs').classList.add('active');
     document.querySelectorAll('.admin-tabs button')[2].classList.add('active');
@@ -1811,7 +1807,7 @@ function loginWithGoogle() {
       };
       users.push(existingUser);
       localStorage.setItem('matrix_users', JSON.stringify(users));
-      alert(`🎉 Реєстрація через Google успішна!\n\n💡 Порада: зайдіть у свій Особистий кабінет і вкажіть свій номер телефону та адресу (це необов'язково, але потрібно для замовлення ремонту).`);
+      alert(`🎉 Реєстрація через Google успішна!\n\n💡 Порада: зайдіть у свій Особистий кабінет і вкажіть свій номер телефону та адресу.`);
     }
     currentUser = existingUser;
     localStorage.setItem('matrix_current_user', JSON.stringify(currentUser));
@@ -1842,10 +1838,52 @@ let visitors = [];
 let onlineCount = 0;
 let siteOnline = localStorage.getItem('matrix_site_online') !== 'false';
 
+// Функция обновления непрочитанных уведомлений в админке
+function updateAdminNotifications() {
+  const lastSeenVisitors = parseInt(localStorage.getItem('admin_last_seen_visitors') || '0');
+  const lastSeenLedger = parseInt(localStorage.getItem('admin_last_seen_ledger') || '0');
+
+  const unreadVisitors = Math.max(0, visitors.length - lastSeenVisitors);
+  const unreadLedger = Math.max(0, ledgerEntries.length - lastSeenLedger);
+  const totalUnread = unreadVisitors + unreadLedger;
+
+  // Общий бейдж на кнопке "Адмін" в шапке
+  const globalBadge = document.getElementById('adminGlobalBadge');
+  if (globalBadge) {
+    if (totalUnread > 0) {
+      globalBadge.innerText = totalUnread;
+      globalBadge.style.display = 'inline-block';
+    } else {
+      globalBadge.style.display = 'none';
+    }
+  }
+
+  // Бейджик на вкладке "Головна" (посетители)
+  const badgeDash = document.getElementById('tabBadgeDashboard');
+  if (badgeDash) {
+    if (unreadVisitors > 0) {
+      badgeDash.innerText = unreadVisitors;
+      badgeDash.style.display = 'inline-block';
+    } else {
+      badgeDash.style.display = 'none';
+    }
+  }
+
+  // Бейджик на вкладке "Облік замовлень" (заказы)
+  const badgeLedger = document.getElementById('tabBadgeLedger');
+  if (badgeLedger) {
+    if (unreadLedger > 0) {
+      badgeLedger.innerText = unreadLedger;
+      badgeLedger.style.display = 'inline-block';
+    } else {
+      badgeLedger.style.display = 'none';
+    }
+  }
+}
+
 // Загрузка реальных посетителей и онлайн статуса из Firebase
 function fetchFirebaseAnalytics() {
   if (!db) return;
-  // Загружаем лог посетителей
   db.collection("visitors").orderBy("timestamp", "desc").limit(500).get().then(snapshot => {
     visitors = [];
     snapshot.forEach(doc => {
@@ -1854,9 +1892,9 @@ function fetchFirebaseAnalytics() {
     if (localStorage.getItem('matrix_admin') === 'true') {
       updateAdminStats();
     }
+    updateAdminNotifications();
   }).catch(e => console.log(e));
 
-  // Считаем онлайн (кто активен последние 60 секунд)
   const minuteAgo = Date.now() - 60000;
   db.collection("online_users").where("lastActive", ">", minuteAgo).get().then(snapshot => {
     onlineCount = snapshot.size || 1;
@@ -1906,6 +1944,9 @@ if (path === '/admin' && localStorage.getItem('matrix_admin') === 'true') {
   renderAdminRepairs(); 
   renderAdminWebSubmissions();
   renderLedger();
+  // По умолчанию при входе в админку фиксируем просмотр дашборда
+  localStorage.setItem('admin_last_seen_visitors', visitors.length);
+  updateAdminNotifications();
   window.scrollTo({top:0,behavior:'smooth'});
   return; 
 }
@@ -1950,7 +1991,7 @@ toggleAuthModal(false);
 updateUI();
 renderProfile();
 
-alert(`🎉 Реєстрація успішна! +50 бонусів!\n\n💡 Порада: зайдіть у свій Особистий кабінет і вкажіть свій номер телефону та адресу (це необов'язково, але потрібно для замовлення ремонту).`);
+alert(`🎉 Реєстрація успішна! +50 бонусів!\n\n💡 Порада: зайдіть у свій Особистий кабінет і вкажіть свій номер телефону та адресу.`);
 navigateTo('/profile');
 }
 
@@ -2290,7 +2331,7 @@ function moderatorLogout() { localStorage.removeItem('matrix_moderator'); showTo
 function updateAdminVisibility() {
 const isAdmin = localStorage.getItem('matrix_admin') === 'true';
 document.getElementById('adminNavLink').style.display = isAdmin ? 'inline-block' : 'none';
-if (isAdmin) { const nameEl = document.getElementById('adminNameDisplay'); if (nameEl) nameEl.textContent = 'Адміністратор'; updateAdminAvatarDisplay(); }
+if (isAdmin) { const nameEl = document.getElementById('adminNameDisplay'); if (nameEl) nameEl.textContent = 'Адміністратор'; updateAdminAvatarDisplay(); updateAdminNotifications(); }
 }
 function updateModeratorVisibility() {
 const mod = JSON.parse(localStorage.getItem('matrix_moderator') || 'null');
@@ -2357,6 +2398,7 @@ if (action === 'clearVisitors') {
       }).then(() => {
         visitors = [];
         updateAdminStats();
+        updateAdminNotifications();
         showToast('🗑️ Історію очищено');
       });
     }
@@ -2391,6 +2433,7 @@ cart.forEach(item => {
   saveLedgerToCloud(ord);
 });
 saveLedger();
+updateAdminNotifications();
 if (currentUser) { currentUser.ordersCount = (currentUser.ordersCount || 0) + cart.reduce((s,item) => s + (item.qty || 1), 0); currentUser.bonuses = (currentUser.bonuses || 0) + cart.reduce((s,item) => s + (item.qty || 1) * 10, 0); localStorage.setItem('matrix_current_user', JSON.stringify(currentUser)); }
 alert(`✅ Замовлення оформлено! +${cart.reduce((s,item) => s + (item.qty || 1), 0) * 10} бонусів!`);
 cart = []; saveCart(); updateCartUI(); toggleCartModal();
@@ -2475,8 +2518,9 @@ function submitRepairOrder(e) {
 
   webSubmissions.push(newSub);
   saveWebSubmissions();
+  updateAdminNotifications();
 
-  alert(`✅ Заявку успішно оформлено та надіслано в базу!\n\nНомер квитанції: #${randCode}\n\nДані синхронізовано з сервером, тепер вони доступні на ПК в адмінці.`);
+  alert(`✅ Заявку успішно оформлено та надіслано в базу!\n\nНомер квитанції: #${randCode}`);
 
   document.getElementById('repName').value = '';
   document.getElementById('repPhone').value = '';
