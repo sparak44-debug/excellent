@@ -6,7 +6,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>EXCELLENT (Екселент) — Комп'ютерна майстерня у Кам'янському | Ремонт ПК, ноутбуків та консолей</title>
 <meta name="description" content="Професійна комп'ютерна майстерня EXCELLENT у Кам'янському. Якісний ремонт комп'ютерів, ноутбуків, Steam Deck, PS5 та Xbox. Чистка від пилу, заміна термоінтерфейсів PTM7950, налаштування Windows, збірка ПК. Майстри Спартак та Павло. Тел: 063 456 94 26.">
-<meta name="keywords" content="комп'ютерна майстерня кам'янське, компьютерная мастерская каменское, ремонт комп'ютерів кам'янське, ремонт пк каменское, ремонт ноутбуків каменское, ремонт ноутбуков каменское, чистка ноутбука каменское, замена термопасты каменское, ptm7950, ремонт steam deck, ремонт ps5, настройка windows каменское, сборка пк каменское, спартак, павло">
+<meta name="keywords" content="комп'ютерна майстерня кам'янське, компьютерная мастерская каменское, ремонт комп'ютерів кам'янське, ремонт пк каменское, ремонт ноутбуків кам'янське, ремонт ноутбуков каменское, чистка ноутбука каменское, замена термопасты каменское, ptm7950, ремонт steam deck, ремонт ps5, настройка windows каменское, сборка пк каменское, спартак, павло">
 <meta name="author" content="EXCELLENT Hardware Lab">
 <meta name="robots" content="index, follow">
 <meta name="geo.region" content="UA-12">
@@ -1047,6 +1047,8 @@ nav a{font-size:9px;padding:3px 6px}
 <p style="font-size:12px;color:var(--text-secondary);margin-bottom:15px">🎉 Створіть акаунт та отримайте 50 бонусів!</p>
 <input type="text" id="regName" class="input-field" placeholder="Ваше ім'я" style="margin-bottom:8px">
 <input type="text" id="regLogin" class="input-field" placeholder="Логін" style="margin-bottom:8px">
+<input type="tel" id="regPhone" class="input-field" placeholder="Номер телефону (необов'язково)" style="margin-bottom:8px">
+<input type="text" id="regCity" class="input-field" placeholder="Місто / Адреса (необов'язково)" style="margin-bottom:8px">
 <input type="password" id="regPass" class="input-field" placeholder="Пароль (мін. 4)" style="margin-bottom:8px">
 <input type="password" id="regPass2" class="input-field" placeholder="Повторіть пароль" style="margin-bottom:15px">
 <button class="btn btn-primary" style="width:100%" onclick="registerUser()">Зареєструватися 🚀</button>
@@ -1093,7 +1095,6 @@ try {
   console.log('Помилка підключення Firebase:', e); 
 }
 
-// НАСТРОЙКИ TELEGRAM БОТА
 const TG_BOT_TOKEN = "9139155794:AAHyn6neK_nhaGTFgMeQUir9NuR4GDZH4M8"; 
 const TG_CHAT_ID = "1090160451";
 
@@ -1773,6 +1774,12 @@ window.addEventListener('scroll', function() {
 
 function toggleCallback(show) {
   document.getElementById('callbackModal').classList.toggle('active', show);
+  if (show && currentUser) {
+    const phoneInput = document.getElementById('callbackPhone');
+    if (phoneInput && !phoneInput.value && currentUser.phone) {
+      phoneInput.value = currentUser.phone;
+    }
+  }
 }
 
 function submitCallback() {
@@ -1791,7 +1798,6 @@ function submitCallback() {
     db.collection("callbacks").doc("cb_" + callbackItem.id).set(callbackItem).catch(e => {});
   }
 
-  // Отправка уведомления в Телеграм
   sendTelegramAlert(`📞 <b>Запит на зворотний дзвінок!</b>\n📱 Телефон: <code>${phone}</code>\n⏰ Час: ${callbackItem.time}`);
 
   toggleCallback(false);
@@ -1820,6 +1826,8 @@ function loginWithGoogle() {
         name: user.displayName || 'Google User',
         login: user.email,
         password: '',
+        phone: '',
+        address: '',
         bonuses: 50,
         personalDiscount: 0,
         isGoogle: true,
@@ -1830,7 +1838,6 @@ function loginWithGoogle() {
       users.push(existingUser);
       localStorage.setItem('matrix_users', JSON.stringify(users));
       
-      // Отправка уведомления в Телеграм о новой регистрации
       sendTelegramAlert(`👤 <b>Нова реєстрація на сайті!</b>\n📛 Ім'я: <b>${existingUser.name}</b>\n📧 Логін/Email: <code>${existingUser.login}</code>`);
       
       alert(`🎉 Реєстрація через Google успішна!\n\n💡 Порада: зайдіть у свій Особистий кабінет і вкажіть свій номер телефону та адресу.`);
@@ -1886,7 +1893,6 @@ function updateAdminNotifications() {
   let lastSeenTargetCount = parseInt(localStorage.getItem('admin_last_seen_target_count') || '0');
   let lastSeenBellCount = parseInt(localStorage.getItem('admin_last_seen_bell_count') || '0');
 
-  // Если записи удалили из базы, корректируем счётчик просмотренных, чтобы новые события снова зажигали бейдж
   if (lastSeenTargetCount > totalTargetCount) {
     lastSeenTargetCount = totalTargetCount;
     localStorage.setItem('admin_last_seen_target_count', lastSeenTargetCount);
@@ -2020,22 +2026,49 @@ else { document.getElementById('authRegister').style.display = 'block'; document
 function registerUser() {
 const name = document.getElementById('regName').value.trim();
 const login = document.getElementById('regLogin').value.trim();
+const phone = document.getElementById('regPhone').value.trim();
+const city = document.getElementById('regCity').value.trim();
 const pass = document.getElementById('regPass').value.trim();
 const pass2 = document.getElementById('regPass2').value.trim();
+
 if (!name) { showToast('❌ Введіть ім\'я'); return; }
 if (!login) { showToast('❌ Введіть логін'); return; }
 if (pass.length < 4) { showToast('❌ Пароль мін. 4 символи'); return; }
 if (pass !== pass2) { showToast('❌ Паролі не співпадають'); return; }
 if (users.find(u => u.login === login)) { showToast('❌ Користувач вже існує'); return; }
-const newUser = { id: Date.now(), name, login, password: pass, phone: '', address: '', bonuses: 50, personalDiscount: 0, ordersCount: 0, totalSpent: 0, level: 1, levelName: 'Новачок', avatar: '👤', cardNumber: '', cardExpiry: '', cardCvv: '', joined: new Date().toISOString(), achievements: [] };
-users.push(newUser); localStorage.setItem('matrix_users', JSON.stringify(users));
-currentUser = newUser; localStorage.setItem('matrix_current_user', JSON.stringify(currentUser));
 
-// Отправка уведомления в Телеграм о новой регистрации
-sendTelegramAlert(`👤 <b>Нова реєстрація на сайті!</b>\n📛 Ім'я: <b>${name}</b>\n🔑 Логін: <code>${login}</code>`);
+const newUser = { 
+  id: Date.now(), 
+  name, 
+  login, 
+  password: pass, 
+  phone: phone || '', 
+  address: city || '', 
+  bonuses: 50, 
+  personalDiscount: 0, 
+  ordersCount: 0, 
+  totalSpent: 0, 
+  level: 1, 
+  levelName: 'Новачок', 
+  avatar: '👤', 
+  cardNumber: '', 
+  cardExpiry: '', 
+  cardCvv: '', 
+  joined: new Date().toISOString(), 
+  achievements: [] 
+};
+
+users.push(newUser); 
+localStorage.setItem('matrix_users', JSON.stringify(users));
+currentUser = newUser; 
+localStorage.setItem('matrix_current_user', JSON.stringify(currentUser));
+
+sendTelegramAlert(`👤 <b>Нова реєстрація на сайті!</b>\n📛 Ім'я: <b>${name}</b>\n🔑 Логін: <code>${login}</code>\n📱 Телефон: <code>${phone || 'не вказано'}</code>\n📍 Місто: ${city || 'не вказано'}`);
 
 document.getElementById('regName').value = '';
 document.getElementById('regLogin').value = '';
+document.getElementById('regPhone').value = '';
+document.getElementById('regCity').value = '';
 document.getElementById('regPass').value = '';
 document.getElementById('regPass2').value = '';
 
@@ -2043,7 +2076,7 @@ toggleAuthModal(false);
 updateUI();
 renderProfile();
 
-alert(`🎉 Реєстрація успішна! +50 бонусів!\n\n💡 Порада: зайдіть у свій Особистий кабінет і вкажіть свій номер телефону та адресу.`);
+alert(`🎉 Реєстрація успішна! +50 бонусів!\n\n💡 Перейдіть в особистий кабінет, щоб перевірити або доповнити дані.`);
 navigateTo('/profile');
 }
 
@@ -2372,7 +2405,6 @@ cart.forEach(item => {
   ledgerEntries.push(ord);
   saveLedgerToCloud(ord);
 
-  // Уведомление в Телеграм о покупке из магазина
   sendTelegramAlert(`🛒 <b>Покупка в магазині!</b>\n👤 Клієнт: <b>${currentUser.name}</b>\n📱 Телефон: <code>${currentUser.phone || 'Не вказано'}</code>\n📦 Товар: <b>${item.name}</b> (${item.price} грн × ${item.qty || 1})`);
 });
 saveLedger();
@@ -2463,7 +2495,6 @@ function submitRepairOrder(e) {
   saveWebSubmissions();
   updateAdminNotifications();
 
-  // Отправка уведомления в Телеграм о заявке на ремонт
   sendTelegramAlert(`🛠️ <b>Нова заявка на ремонт з сайту!</b>\n👤 Клієнт: <b>${name}</b>\n📱 Телефон: <code>${phone}</code>\n📍 Адреса: ${address || 'Кам\'янське'}\n💻 Пристрій: <b>${device}</b>\n⚙️ Послуга: ${fault}\n🎫 Квитанція: #${randCode}`);
 
   alert(`✅ Заявку успішно оформлено та надіслано в базу!\n\nНомер квитанції: #${randCode}`);
@@ -2769,6 +2800,18 @@ try {
   }
 } catch(e) { console.error('Game error:', e); }
 
+// АВТОМАТИЧЕСКОЕ ПОДТЯГИВАНИЕ ДАННЫХ ПРИ ОТКРЫТИИ ФОРМЫ РЕМОНТА
+function prefillRepairForm() {
+  if (currentUser) {
+    const nameEl = document.getElementById('repName');
+    const phoneEl = document.getElementById('repPhone');
+    const addrEl = document.getElementById('repAddress');
+    if (nameEl && !nameEl.value && currentUser.name) nameEl.value = currentUser.name;
+    if (phoneEl && !phoneEl.value && currentUser.phone) phoneEl.value = currentUser.phone;
+    if (addrEl && !addrEl.value && currentUser.address) addrEl.value = currentUser.address;
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   try {
     initGlobalAnnouncement();
@@ -2776,6 +2819,7 @@ document.addEventListener('DOMContentLoaded', () => {
     updateAdminVisibility(); updateModeratorVisibility(); updateSiteStatus();
     renderModerators(); renderPopularQuestions(); renderDynamicNews();
     updateUI();
+    prefillRepairForm();
     if (currentUser) renderProfile();
   } catch(e) { console.error('Init error:', e); }
 });
