@@ -634,6 +634,12 @@ nav a{font-size:9px;padding:3px 6px}
 <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:5px"><p style="font-size:13px;font-weight:bold;color:var(--accent-blue)" id="trackerCurrentText">Статус: В роботі</p><p style="font-size:12px;font-weight:800;color:var(--accent-green)" id="trackerMasterText">Майстер: #109</p><span id="trackerPercent" style="font-size:12px;font-weight:900;color:var(--accent-purple)">0%</span></div>
 <div class="progress-bar-container"><div class="progress-bar-fill" id="progressBarFill"></div></div>
 <div class="tracker-steps-apple"><div class="t-step-node" id="node-1"><div class="t-node-circle">1</div>Прийнято</div><div class="t-step-node" id="node-2"><div class="t-node-circle">2</div>Діагностика</div><div class="t-step-node" id="node-3"><div class="t-node-circle">3</div>Узгодження</div><div class="t-step-node" id="node-4"><div class="t-node-circle">4</div>Ремонт</div><div class="t-step-node" id="node-5"><div class="t-node-circle">5</div>Тести</div><div class="t-step-node" id="node-6"><div class="t-node-circle">6</div>Готово</div></div>
+<div id="trackerDetailsBox" style="margin-top:15px;padding-top:15px;border-top:1px solid var(--border-color);font-size:12px;display:none">
+  <div><b>🛠️ Виконані роботи:</b> <span id="trackResWorks" style="color:var(--text-primary)">-</span></div>
+  <div style="margin-top:4px"><b>💬 Коментар майстра:</b> <span id="trackResComment" style="color:var(--accent-blue)">-</span></div>
+  <div style="margin-top:4px"><b>💰 Сума:</b> <span id="trackResPrice" style="color:var(--accent-green);font-weight:bold">-</span></div>
+  <div style="margin-top:4px"><b>🛡️ Гарантія:</b> <span id="trackResWarranty" style="color:#f59e0b;font-weight:bold">-</span></div>
+</div>
 </div>
 </div>
 </section>
@@ -941,29 +947,53 @@ nav a{font-size:9px;padding:3px 6px}
 <div class="card-box">
 <h3 style="font-size:15px;margin-bottom:10px">🛠️ Управління ремонтами та квитанціями</h3>
 <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:15px;align-items:flex-end">
-<div style="flex:1;min-width:150px">
-<label style="font-size:11px;color:var(--text-secondary)">Код квитанції (до 10 цифр):</label>
-<input type="text" id="newRepairCode" class="input-field" placeholder="напр. 22 або 482910" maxlength="10" style="margin-top:0">
+<div style="flex:1;min-width:120px">
+<label style="font-size:11px;color:var(--text-secondary)">Код квитанції:</label>
+<input type="text" id="newRepairCode" class="input-field" placeholder="напр. 22" maxlength="10" style="margin-top:0">
 </div>
-<div style="flex:1;min-width:150px">
+<div style="flex:1;min-width:140px">
 <label style="font-size:11px;color:var(--text-secondary)">Клієнт:</label>
 <select id="newRepairClient" class="select-field" style="margin-top:0">
 <option value="offline">Немає на сайті (Офлайн)</option>
 <option value="user_list" disabled>--- Зареєстровані ---</option>
 </select>
 </div>
-<div style="flex:1;min-width:150px">
-<label style="font-size:11px;color:var(--text-secondary)">Опис:</label>
-<input type="text" id="newRepairDesc" class="input-field" placeholder="Напр: Чистка ПК" style="margin-top:0">
+<div style="flex:1;min-width:140px">
+<label style="font-size:11px;color:var(--text-secondary)">Пристрій / Опис:</label>
+<input type="text" id="newRepairDesc" class="input-field" placeholder="Ноутбук ASUS" style="margin-top:0">
 </div>
-<button class="btn btn-success" onclick="createRepair()">➕ Видати код</button>
+<div style="flex:1;min-width:130px">
+<label style="font-size:11px;color:var(--text-secondary)">Виконані роботи:</label>
+<input type="text" id="newRepairWorks" class="input-field" placeholder="Чистка, заміна пасти" style="margin-top:0">
 </div>
+<div style="flex:1;min-width:130px">
+<label style="font-size:11px;color:var(--text-secondary)">Коментар майстра:</label>
+<input type="text" id="newRepairComment" class="input-field" placeholder="Замінено кулер" style="margin-top:0">
+</div>
+<div style="flex:1;min-width:100px">
+<label style="font-size:11px;color:var(--text-secondary)">Сума (грн):</label>
+<input type="number" id="newRepairPrice" class="input-field" placeholder="700" style="margin-top:0">
+</div>
+<div style="flex:1;min-width:120px">
+<label style="font-size:11px;color:var(--text-secondary)">Гарантія:</label>
+<select id="newRepairWarranty" class="select-field" style="margin-top:0">
+<option value="Немає гарантії">Без гарантії</option>
+<option value="1 місяць">1 місяць</option>
+<option value="3 місяці">3 місяці</option>
+<option value="6 місяців" selected>6 місяців</option>
+<option value="1 рік">1 рік</option>
+<option value="2 роки">2 роки</option>
+</select>
+</div>
+<button class="btn btn-success" onclick="createRepair()" style="height:45px">➕ Видати код</button>
+</div>
+
 <div style="margin-bottom:15px">
 <input type="text" id="searchRepairInput" class="input-field" placeholder="🔍 Пошук за кодом або ім'ям..." style="margin-top:0" oninput="renderAdminRepairs()">
 </div>
 <div class="admin-table-wrap">
 <table class="admin-table admin-repairs-table">
-<thead><tr><th>Код</th><th>Клієнт</th><th>Опис</th><th>Статус</th><th>Дії</th></tr></thead>
+<thead><tr><th>Код</th><th>Клієнт</th><th>Опис / Роботи</th><th>Сума & Гарантія</th><th>Статус</th><th>Дії</th></tr></thead>
 <tbody id="adminRepairsBody"></tbody>
 </table>
 </div>
@@ -1302,7 +1332,7 @@ const helperKnowledge = [
 {q:['клавіатура не працює','клавиатура не работает','недрукують клавіші','залили клавіатуру','кнопки не реагують'],a:'⌨️ Якщо не працюють окремі клавіші — потрібна заміна.'},
 {q:['як вибрати термопасту','краща термопаста','яка термопаста краща','ptm7950'],a:'🧪 Honeywell PTM7950 (не висихає), Thermal Grizzly Kryonaut, Arctic MX-6.'},
 {q:['скільки коштує діагностика','діагностика','безкоштовна діагностика','ціна діагностики'],a:'💰 Діагностика у EXCELLENT Lab — за домовленістю (уточнюється).'},
-{q:['гарантія','гарантії','скільки гарантія','термін гарантії'],a:'🛡️ Гарантія 6 місяців на роботи та від 12 місяців на комплектуючі.'},
+{q:['гарантія','гарантії','скільки гарантія','термін гарантії'],a:'🛡️ Гарантія від 1 місяця до 2 років або без гарантії.'},
 {q:['залиття','залив','рідина на ноутбуці','кава на клавіатурі','вода на ноутбук'],a:'💧 Терміново вимкни! Ультразвукова чистка плати від 900 грн.'},
 {q:['заміна екрана','розбитий екран','тріснута матриця','екран не працює','екран','дисплей','матриця'],a:'🖥️ Заміна екрана: ноутбук — від 1200 грн + матриця.'},
 {q:['привіт','здоров','хай','добрий день','ку'],a:'👋 Привіт! Я Майстер EXCELLENT. Задавай питання по ремонту техніки! 😊'},
@@ -1535,10 +1565,14 @@ function createRepair() {
   const code = document.getElementById('newRepairCode').value.trim();
   const clientVal = document.getElementById('newRepairClient').value;
   const desc = document.getElementById('newRepairDesc').value.trim();
+  const works = document.getElementById('newRepairWorks').value.trim();
+  const comment = document.getElementById('newRepairComment').value.trim();
+  const price = parseFloat(document.getElementById('newRepairPrice').value) || 0;
+  const warranty = document.getElementById('newRepairWarranty').value;
   
-  if (!code || code.length > 10) { showToast('❌ Введіть код (до 10 символів)'); return; }
+  if (!code || code.length > 10) { showToast('❌ Введіть код квитанції (до 10 символів)'); return; }
   if (allRepairs.some(r => r.code === code)) { showToast('❌ Такий код вже існує'); return; }
-  if (!desc) { showToast('❌ Введіть опис'); return; }
+  if (!desc) { showToast('❌ Введіть опис пристрою'); return; }
 
   let clientName = "Офлайн клієнт";
   let clientPhone = "0507505300";
@@ -1552,6 +1586,10 @@ function createRepair() {
 
   const newRepair = {
     code, clientId, clientName, clientPhone, desc,
+    works: works || desc,
+    comment: comment || 'Ремонт виконується',
+    price,
+    warranty: warranty || '6 місяців',
     status: 1,
     date: new Date().toISOString(),
     master: "Спартак"
@@ -1560,11 +1598,30 @@ function createRepair() {
   allRepairs.push(newRepair);
   saveRepairs();
   
+  // Если сумма сразу указана, можно при желании сразу добавить в кассу или при смене статуса
+  if (price > 0) {
+    ledgerEntries.push({
+      id: Date.now(),
+      date: new Date().toISOString().slice(0, 10),
+      name: clientName,
+      phone: clientPhone,
+      address: 'Кам\'янське',
+      device: desc,
+      work: works || desc,
+      price
+    });
+    saveLedger();
+  }
+  
   document.getElementById('newRepairCode').value = '';
   document.getElementById('newRepairDesc').value = '';
+  document.getElementById('newRepairWorks').value = '';
+  document.getElementById('newRepairComment').value = '';
+  document.getElementById('newRepairPrice').value = '';
   
   renderAdminRepairs();
-  showToast('✅ Код видано!');
+  renderLedger();
+  showToast('✅ Квитанцію створено!');
 }
 
 function renderAdminRepairs() {
@@ -1575,7 +1632,7 @@ function renderAdminRepairs() {
   const filtered = allRepairs.filter(r => r.code.toLowerCase().includes(query) || r.clientName.toLowerCase().includes(query));
 
   if (filtered.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:15px;color:var(--text-secondary)">Ремонтів не знайдено</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:15px;color:var(--text-secondary)">Ремонтів не знайдено</td></tr>';
     return;
   }
 
@@ -1583,8 +1640,24 @@ function renderAdminRepairs() {
     const options = stepNames.map((name, idx) => `<option value="${idx + 1}" ${r.status === idx + 1 ? 'selected' : ''}>${idx + 1}. ${name}</option>`).join('');
     return `<tr>
       <td><b>#${r.code}</b></td>
-      <td>${r.clientName}</td>
-      <td>${r.desc}</td>
+      <td>${r.clientName}<br><span style="font-size:10px;color:var(--text-secondary)">${r.clientPhone}</span></td>
+      <td>
+        <b>Пристрій:</b> ${r.desc}<br>
+        <b>Роб:</b> <input type="text" value="${r.works || ''}" onchange="updateRepairField('${r.code}', 'works', this.value)" style="background:var(--input-bg);color:var(--text-primary);border:1px solid var(--border-color);padding:2px 6px;border-radius:4px;font-size:11px;width:130px"><br>
+        <b>Ком.:</b> <input type="text" value="${r.comment || ''}" onchange="updateRepairField('${r.code}', 'comment', this.value)" style="background:var(--input-bg);color:var(--text-primary);border:1px solid var(--border-color);padding:2px 6px;border-radius:4px;font-size:11px;width:130px;margin-top:2px">
+      </td>
+      <td>
+        <b>Сума:</b> <input type="number" value="${r.price || 0}" onchange="updateRepairPriceField('${r.code}', this.value)" style="background:var(--input-bg);color:var(--accent-green);font-weight:bold;border:1px solid var(--border-color);padding:2px 4px;border-radius:4px;font-size:11px;width:80px"> грн<br>
+        <span style="font-size:10px;color:#f59e0b">🛡️ Гарантія:</span> 
+        <select onchange="updateRepairField('${r.code}', 'warranty', this.value)" style="background:var(--input-bg);color:var(--text-primary);border:1px solid var(--border-color);padding:2px;border-radius:4px;font-size:10px;margin-top:2px">
+          <option value="Немає гарантії" ${r.warranty === 'Немає гарантії' ? 'selected' : ''}>Без гарантії</option>
+          <option value="1 місяць" ${r.warranty === '1 місяць' ? 'selected' : ''}>1 міс.</option>
+          <option value="3 місяці" ${r.warranty === '3 місяці' ? 'selected' : ''}>3 міс.</option>
+          <option value="6 місяців" ${r.warranty === '6 місяців' || !r.warranty ? 'selected' : ''}>6 міс.</option>
+          <option value="1 рік" ${r.warranty === '1 рік' ? 'selected' : ''}>1 рік</option>
+          <option value="2 роки" ${r.warranty === '2 роки' ? 'selected' : ''}>2 роки</option>
+        </select>
+      </td>
       <td>
         <select onchange="updateRepairStatus('${r.code}', this.value)" style="padding:4px;border-radius:4px;background:var(--input-bg);color:var(--text-primary);border:1px solid var(--border-color)">
           ${options}
@@ -1593,6 +1666,42 @@ function renderAdminRepairs() {
       <td><button class="btn btn-sm btn-danger" onclick="deleteRepair('${r.code}')">✕</button></td>
     </tr>`;
   }).join('');
+}
+
+function updateRepairField(code, field, val) {
+  const r = allRepairs.find(item => item.code === code);
+  if (r) {
+    r[field] = val;
+    saveRepairs();
+    showToast('✅ Оновлено');
+  }
+}
+
+function updateRepairPriceField(code, val) {
+  const r = allRepairs.find(item => item.code === code);
+  if (r) {
+    const oldPrice = r.price || 0;
+    const newPrice = parseFloat(val) || 0;
+    r.price = newPrice;
+    saveRepairs();
+    
+    // Автоматически корректируем облік прибутку
+    if (newPrice > 0 && oldPrice === 0) {
+      ledgerEntries.push({
+        id: Date.now(),
+        date: new Date().toISOString().slice(0, 10),
+        name: r.clientName,
+        phone: r.clientPhone,
+        address: 'Кам\'янське',
+        device: r.desc,
+        work: r.works || r.desc,
+        price: newPrice
+      });
+      saveLedger();
+      renderLedger();
+    }
+    showToast('✅ Суму оновлено та враховано');
+  }
 }
 
 function renderAdminCallbacks() {
@@ -1684,17 +1793,20 @@ function updateRepairStatus(code, newStatus) {
     renderAdminRepairs();
 
     if (parseInt(newStatus) === 6) {
-      const priceInput = prompt(`Ремонт #${code} (${repair.clientName}) завершено! Введіть суму за роботу (грн) для автоматичного внесення в облік:`, "600");
+      const priceInput = prompt(`Ремонт #${code} (${repair.clientName}) завершено! Введіть суму за роботу (грн) для автоматичного внесення в облік:`, repair.price || "600");
       if (priceInput !== null && priceInput.trim() !== "") {
         const price = parseFloat(priceInput) || 0;
+        repair.price = price;
+        saveRepairs();
+        
         ledgerEntries.push({
           id: Date.now(),
           date: new Date().toISOString().slice(0, 10),
           name: repair.clientName,
           phone: repair.clientPhone || '0507505300',
           address: 'Кам\'янське',
-          device: 'Ремонт/Техніка',
-          work: repair.desc,
+          device: repair.desc,
+          work: repair.works || repair.desc,
           price
         });
         saveLedger();
@@ -1740,6 +1852,7 @@ function switchAdminTab(tabName) {
 function checkDetailedStatus() {
   const code = document.getElementById('trackInput').value.trim();
   const box = document.getElementById('trackerResultBox');
+  const detailsBox = document.getElementById('trackerDetailsBox');
   if (!code) { alert('Введіть номер квитанції!'); return; }
   
   const repair = allRepairs.find(r => r.code === code);
@@ -1751,14 +1864,20 @@ function checkDetailedStatus() {
   }
 
   box.style.display = 'flex';
+  detailsBox.style.display = 'block';
   const step = repair.status;
   const pct = Math.round((step / 6) * 100);
   
   document.getElementById('trackerCurrentText').innerText = `Квитанція #${repair.code}: ${stepNames[step - 1]}`;
-  document.getElementById('trackerMasterText').innerText = `Опис: ${repair.desc}`;
+  document.getElementById('trackerMasterText').innerText = `Пристрій: ${repair.desc}`;
   document.getElementById('trackerPercent').innerText = `${pct}%`;
   document.getElementById('progressBarFill').style.width = `${pct}%`;
   
+  document.getElementById('trackResWorks').innerText = repair.works || repair.desc;
+  document.getElementById('trackResComment').innerText = repair.comment || 'Ремонт виконується';
+  document.getElementById('trackResPrice').innerText = `${(repair.price || 0).toLocaleString()} грн`;
+  document.getElementById('trackResWarranty').innerText = repair.warranty || '6 місяців';
+
   for (let i = 1; i <= 6; i++) {
     document.getElementById(`node-${i}`).classList.toggle('active', i <= step);
   }
@@ -2197,13 +2316,19 @@ userRepairs.map(r => {
   const step = r.status;
   const pct = Math.round((step / 6) * 100);
   return `
-    <div style="background:rgba(168,85,247,0.1);border:1px solid var(--border-color);padding:15px;border-radius:12px;margin-bottom:10px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+    <div style="background:rgba(168,85,247,0.1);border:1px solid var(--border-color);padding:15px;border-radius:12px;margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
         <b>Код квитанції: #${r.code}</b>
         <span style="color:var(--accent-green);font-weight:800">${stepNames[step-1]}</span>
       </div>
-      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:10px">Опис: ${r.desc}</p>
-      <div class="progress-bar-container"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+      <p style="font-size:12px;color:var(--text-secondary);margin-bottom:6px"><b>Пристрій:</b> ${r.desc}</p>
+      <p style="font-size:12px;color:var(--text-primary);margin-bottom:6px"><b>🛠️ Роботи:</b> ${r.works || '-'}</p>
+      <p style="font-size:12px;color:var(--accent-blue);margin-bottom:6px"><b>💬 Коментар майстра:</b> ${r.comment || '-'}</p>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;font-size:12px">
+        <span><b>💰 Сума:</b> <span style="color:var(--accent-green);font-weight:bold">${(r.price || 0).toLocaleString()} грн</span></span>
+        <span><b>🛡️ Гарантія:</b> <span style="color:#f59e0b;font-weight:bold">${r.warranty || '6 місяців'}</span></span>
+      </div>
+      <div class="progress-bar-container" style="margin-top:10px"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
     </div>
   `;
 }).join('');
@@ -2483,6 +2608,10 @@ function submitRepairOrder(e) {
     clientName: name,
     clientPhone: phone,
     desc: `${device} - ${fault}`,
+    works: fault,
+    comment: 'Заявку прийнято в обробку',
+    price: 0,
+    warranty: '6 місяців',
     status: 1,
     date: new Date().toISOString(),
     master: "Спартак"
@@ -2800,7 +2929,6 @@ try {
   }
 } catch(e) { console.error('Game error:', e); }
 
-// АВТОМАТИЧЕСКОЕ ПОДТЯГИВАНИЕ ДАННЫХ ПРИ ОТКРЫТИИ ФОРМЫ РЕМОНТА
 function prefillRepairForm() {
   if (currentUser) {
     const nameEl = document.getElementById('repName');
