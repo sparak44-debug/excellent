@@ -1598,7 +1598,6 @@ function createRepair() {
   allRepairs.push(newRepair);
   saveRepairs();
   
-  // Если сумма сразу указана, можно при желании сразу добавить в кассу или при смене статуса
   if (price > 0) {
     ledgerEntries.push({
       id: Date.now(),
@@ -1685,7 +1684,6 @@ function updateRepairPriceField(code, val) {
     r.price = newPrice;
     saveRepairs();
     
-    // Автоматически корректируем облік прибутку
     if (newPrice > 0 && oldPrice === 0) {
       ledgerEntries.push({
         id: Date.now(),
@@ -1966,6 +1964,7 @@ function loginWithGoogle() {
     toggleAuthModal(false);
     updateUI();
     renderProfile();
+    prefillRepairForm();
     showToast(`✅ Вітаємо, ${currentUser.name}!`);
   }).catch((error) => {
     showToast('❌ Помилка Google входу: ' + error.message);
@@ -1976,13 +1975,15 @@ function showToast(msg) { const t = document.getElementById('toast-notification'
 
 let users = JSON.parse(localStorage.getItem('matrix_users') || '[]');
 let currentUser = null;
+
 try {
   const savedUser = localStorage.getItem('matrix_current_user');
-  if (savedUser && savedUser !== 'null') {
+  if (savedUser && savedUser !== 'null' && savedUser !== 'undefined') {
     currentUser = JSON.parse(savedUser);
   }
 } catch (e) {
   currentUser = null;
+  localStorage.removeItem('matrix_current_user');
 }
 
 let moderators = JSON.parse(localStorage.getItem('matrix_moderators') || '[]');
@@ -2194,6 +2195,7 @@ document.getElementById('regPass2').value = '';
 toggleAuthModal(false); 
 updateUI();
 renderProfile();
+prefillRepairForm();
 
 alert(`🎉 Реєстрація успішна! +50 бонусів!\n\n💡 Перейдіть в особистий кабінет, щоб перевірити або доповнити дані.`);
 navigateTo('/profile');
@@ -2230,6 +2232,7 @@ localStorage.setItem('matrix_current_user', JSON.stringify(currentUser));
 toggleAuthModal(false); 
 updateUI();
 renderProfile();
+prefillRepairForm();
 showToast('✅ Вхід виконано!'); 
 navigateTo('/profile');
 }
@@ -2239,20 +2242,52 @@ function logoutUser() {
   localStorage.removeItem('matrix_current_user'); 
   updateUI(); 
   renderProfile();
+  prefillRepairForm();
   showToast('👋 Ви вийшли'); 
   navigateTo('/'); 
 }
 
 function updateUI() {
-const btn = document.getElementById('authBtnLabel');
-const profileLink = document.getElementById('profileNavLink');
-if (currentUser) { 
-  btn.innerHTML = '👤 ' + currentUser.name.split(' ')[0]; 
-  profileLink.style.display = 'inline-block'; 
-} else { 
-  btn.innerHTML = '🔑 Вхід'; 
-  profileLink.style.display = 'none'; 
+  const btn = document.getElementById('authBtnLabel');
+  const profileLink = document.getElementById('profileNavLink');
+  
+  try {
+    const saved = localStorage.getItem('matrix_current_user');
+    if (saved && saved !== 'null') {
+      currentUser = JSON.parse(saved);
+    }
+  } catch(e) {}
+
+  if (currentUser && currentUser.name) { 
+    if (btn) btn.innerHTML = '👤 ' + currentUser.name.split(' ')[0]; 
+    if (profileLink) profileLink.style.display = 'inline-block'; 
+  } else { 
+    if (btn) btn.innerHTML = '🔑 Вхід'; 
+    if (profileLink) profileLink.style.display = 'none'; 
+  }
 }
+
+function prefillRepairForm() {
+  let activeUser = currentUser;
+  if (!activeUser) {
+    try {
+      const saved = localStorage.getItem('matrix_current_user');
+      if (saved && saved !== 'null') {
+        activeUser = JSON.parse(saved);
+        currentUser = activeUser;
+      }
+    } catch(e) {}
+  }
+
+  if (activeUser) {
+    const nameEl = document.getElementById('repName');
+    const phoneEl = document.getElementById('repPhone');
+    const addrEl = document.getElementById('repAddress');
+    
+    if (nameEl && activeUser.name) nameEl.value = activeUser.name;
+    if (phoneEl && activeUser.phone) phoneEl.value = activeUser.phone;
+    if (addrEl && activeUser.address) addrEl.value = activeUser.address;
+  }
 }
 
 function renderProfile() {
@@ -2448,6 +2483,7 @@ if (currentUser) {
     localStorage.setItem('matrix_current_user', JSON.stringify(currentUser));
   }
   updateUI();
+  prefillRepairForm();
   showToast('✅ Збережено');
   renderProfile();
 }
@@ -2928,17 +2964,6 @@ try {
     document.getElementById('restartBtn').addEventListener('click', window.startGame);
   }
 } catch(e) { console.error('Game error:', e); }
-
-function prefillRepairForm() {
-  if (currentUser) {
-    const nameEl = document.getElementById('repName');
-    const phoneEl = document.getElementById('repPhone');
-    const addrEl = document.getElementById('repAddress');
-    if (nameEl && !nameEl.value && currentUser.name) nameEl.value = currentUser.name;
-    if (phoneEl && !phoneEl.value && currentUser.phone) phoneEl.value = currentUser.phone;
-    if (addrEl && !addrEl.value && currentUser.address) addrEl.value = currentUser.address;
-  }
-}
 
 document.addEventListener('DOMContentLoaded', () => {
   try {
